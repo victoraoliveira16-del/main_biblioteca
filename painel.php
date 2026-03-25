@@ -158,8 +158,8 @@ try {
                 btnEmp.classList.remove('active');
                 btnDev.classList.add('active');
                 subtitle.innerText = "Devoluções e Atrasos";
-                secEmp.style.display = "none"; 
-                secDev.style.display = "block"; 
+                secEmp.style.display = "none"; // Desliga a luz
+                secDev.style.display = "block"; // Liga a luz
                 card.style.maxWidth = "800px";
             } else {
                 btnDev.classList.remove('active');
