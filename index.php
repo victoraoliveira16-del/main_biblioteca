@@ -13,7 +13,7 @@
     <div class="welcome-card">
         <div class="logo">LIVH <span>BOOKSTORE</span></div>
 
-        <h1 id="welcome-title">Bem-vindo á nossa Livraria</h1>
+        <h1 id="welcome-title">Bem-vindo a nossa Livraria</h1>
         <p id="welcome-text">Gerencie seus empréstimos e livros de forma simples e rápida.</p>
 
         <div id="google_translate_element"></div>
