@@ -58,7 +58,7 @@ try {
                             <option value="3">3 Semanas</option>
                         </select>
                     </div>
-                    <p class="warning">⚠️ Multa diária de R$ 2,00 em caso de atraso.</p>
+                    <p class="warning">⚠️ Multa diária de R$ 2,50 em caso de atraso.</p>
                     <button type="submit" class="btn-submit">Confirmar Empréstimo</button>
                 </form>
             </div>
@@ -86,7 +86,7 @@ try {
                                 if ($hoje > $dataEntrega) {
                                     $diferenca = $hoje->diff($dataEntrega);
                                     $diasAtraso = $diferenca->days;
-                                    $valorMulta = $diasAtraso * 2.00;
+                                    $valorMulta = $diasAtraso * 2.50;
                                     $multaTexto = "R$ " . number_format($valorMulta, 2, ',', '.');
                                     $corMulta = "#ff5252";
                                 }
