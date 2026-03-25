@@ -9,28 +9,38 @@ try {
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btn_confirmar'])) {
         $leitor = $_POST['leitor'];
         $livro = $_POST['livro'];
-        $prazo_tempo = $_POST['prazo_tempo']; // Nome corrigido para bater com o HTML
+        $prazo_tempo = $_POST['prazo_tempo'];
 
-        // Calcula a data somando o valor selecionado (ex: +1 day ou +2 weeks)
-        $data_devolucao = date('Y-m-d', strtotime("+$prazo_tempo"));
+        // VALIDAÇÃO: Verifica se o livro já possui um empréstimo ativo
+        $checkSql = "SELECT COUNT(*) FROM emprestimos WHERE livro_nome = ? AND status = 'ativo'";
+        $checkStmt = $pdo->prepare($checkSql);
+        $checkStmt->execute([$livro]);
+        $livroJaEmprestado = $checkStmt->fetchColumn();
 
-        $sql = "INSERT INTO emprestimos (leitor, livro_nome, data_devolucao_prevista, status) VALUES (?, ?, ?, 'ativo')";
-        $stmt = $pdo->prepare($sql);
-
-        if ($stmt->execute([$leitor, $livro, $data_devolucao])) {
-            $data_formatada = date('d/m/Y', strtotime($data_devolucao));
-            echo "<script>
-                    alert('✅ Empréstimo realizado! Devolução prevista para: $data_formatada');
-                    window.location.href = window.location.href; 
-                  </script>";
-            exit;
+        if ($livroJaEmprestado > 0) {
+            echo "<script>alert('❌ Este livro já está emprestado no momento!');</script>";
         } else {
-            echo "<script>alert('❌ Erro ao registrar no banco.');</script>";
+            // Calcula a data de devolução
+            $data_devolucao = date('Y-m-d', strtotime("+$prazo_tempo"));
+
+            $sql = "INSERT INTO emprestimos (leitor, livro_nome, data_devolucao_prevista, status) VALUES (?, ?, ?, 'ativo')";
+            $stmt = $pdo->prepare($sql);
+
+            if ($stmt->execute([$leitor, $livro, $data_devolucao])) {
+                $data_formatada = date('d/m/Y', strtotime($data_devolucao));
+                echo "<script>
+                        alert('✅ Empréstimo realizado! Devolução em: $data_formatada');
+                        window.location.href = window.location.href; 
+                      </script>";
+                exit;
+            } else {
+                echo "<script>alert('❌ Erro ao registrar no banco.');</script>";
+            }
         }
     }
 } catch (Exception $e) {
     echo "<script>alert('Erro: " . addslashes($e->getMessage()) . "');</script>";
-} // A chave extra que estava aqui foi removida
+}
 ?>
 <!DOCTYPE html>
 <html lang="pt-br">
@@ -135,6 +145,7 @@ try {
     </main>
 
     <script>
+        // Seleção dos elementos (o seu "controle remoto")
         const btnEmp = document.getElementById('btn-aba-emp');
         const btnDev = document.getElementById('btn-aba-dev');
         const secEmp = document.getElementById('secao-emprestimo');
@@ -147,8 +158,8 @@ try {
                 btnEmp.classList.remove('active');
                 btnDev.classList.add('active');
                 subtitle.innerText = "Devoluções e Atrasos";
-                secEmp.style.display = "none";
-                secDev.style.display = "block";
+                secEmp.style.display = "none"; 
+                secDev.style.display = "block"; 
                 card.style.maxWidth = "800px";
             } else {
                 btnDev.classList.remove('active');
