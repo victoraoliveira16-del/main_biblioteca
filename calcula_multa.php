@@ -8,7 +8,7 @@ require_once 'funcoes.php';
  * @param float $valor_diaria Valor da multa por dia de atraso (ex: 2.00)
  * @return array Retorna os dias de atraso e o valor total da multa
  */
-function calcularMulta($conn, $id_emprestimo, $valor_diaria = 2.00)
+function calcularMulta($conn, $id_emprestimo, $valor_diaria = 2.50)
 {
     // 1. Busca os dados do empréstimo
     $sql = "SELECT data_devolucao_prevista, data_devolucao_real 

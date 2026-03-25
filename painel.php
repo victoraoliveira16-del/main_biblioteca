@@ -1,16 +1,43 @@
 <?php
-// Conexão com o banco de dados
+require_once 'config.php';
+
 try {
-    $pdo = new PDO("mysql:host=localhost;dbname=livraria_livh", "root", "");
+    $dsn = "mysql:host=" . DB_HOST . ";port=" . DB_PORT . ";dbname=" . DB_NAME . ";charset=" . DB_CHARSET;
+    $pdo = new PDO($dsn, DB_USER, DB_PASS);
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btn_confirmar'])) {
+        $leitor = $_POST['leitor'];
+        $livro = $_POST['livro'];
+        $prazo_tempo = $_POST['prazo_tempo']; // Nome corrigido para bater com o HTML
+
+        // Calcula a data somando o valor selecionado (ex: +1 day ou +2 weeks)
+        $data_devolucao = date('Y-m-d', strtotime("+$prazo_tempo"));
+
+        $sql = "INSERT INTO emprestimos (leitor, livro_nome, data_devolucao_prevista, status) VALUES (?, ?, ?, 'ativo')";
+        $stmt = $pdo->prepare($sql);
+
+        if ($stmt->execute([$leitor, $livro, $data_devolucao])) {
+            $data_formatada = date('d/m/Y', strtotime($data_devolucao));
+            echo "<script>
+                    alert('✅ Empréstimo realizado! Devolução prevista para: $data_formatada');
+                    window.location.href = window.location.href; 
+                  </script>";
+            exit;
+        } else {
+            echo "<script>alert('❌ Erro ao registrar no banco.');</script>";
+        }
+    }
 } catch (Exception $e) {
-    $erro_banco = true;
-}
+    echo "<script>alert('Erro: " . addslashes($e->getMessage()) . "');</script>";
+} // A chave extra que estava aqui foi removida
 ?>
 <!DOCTYPE html>
 <html lang="pt-br">
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LIVH Bookstore - Painel</title>
     <link rel="stylesheet" href="style.css">
 </head>
@@ -25,12 +52,12 @@ try {
     </header>
 
     <main class="container">
-        <div class="card">
+        <div class="card" id="main-card">
             <h3>Livraria LIVH</h3>
             <h4 id="card-subtitle">Novo Empréstimo</h4>
 
             <div id="secao-emprestimo">
-                <form action="processa_emprestimo.php" method="POST">
+                <form action="" method="POST">
                     <div class="input-group">
                         <label>👤 Nome do Leitor</label>
                         <input type="text" name="leitor" placeholder="Digite o nome..." required>
@@ -44,39 +71,37 @@ try {
                             <option value="O Pequeno Príncipe">O Pequeno Príncipe</option>
                             <option value="O Alquimista">O Alquimista</option>
                             <option value="A Menina que Roubava Livros">A Menina que Roubava Livros</option>
-                            <option value="O Senhor dos Anéis">O Senhor dos Anéis</option>
-                            <option value="Harry Potter e a Pedra Filosofal">Harry Potter e a Pedra Filosofal</option>
-                            <option value="Capitães da Areia">Capitães da Areia</option>
-                            <option value="Cem Anos de Solidão">Cem Anos de Solidão</option>
-                            <option value="Orgulho e Preconceito">Orgulho e Preconceito</option>
                         </select>
                     </div>
                     <div class="input-group">
                         <label>📅 Prazo de Devolução</label>
-                        <select name="prazo_semanas">
-                            <option value="2">2 Semanas</option>
-                            <option value="3">3 Semanas</option>
+                        <select name="prazo_tempo">
+                            <option value="1 day">1 Dia (Entrega amanhã)</option>
+                            <option value="2 weeks">2 Semanas</option>
+                            <option value="3 weeks">3 Semanas</option>
                         </select>
                     </div>
                     <p class="warning">⚠️ Multa diária de R$ 2,50 em caso de atraso.</p>
-                    <button type="submit" class="btn-submit">Confirmar Empréstimo</button>
+                    <button type="submit" name="btn_confirmar" class="btn-submit">Confirmar Empréstimo</button>
                 </form>
             </div>
 
             <div id="secao-devolucoes" style="display: none;">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Leitor</th>
-                            <th>Livro</th>
-                            <th>Multa</th>
-                            <th>Ação</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php
-                        if (isset($pdo)) {
+                <div style="overflow-x: auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nº</th>
+                                <th>Leitor</th>
+                                <th>Livro</th>
+                                <th>Multa</th>
+                                <th>Ação</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php
                             $consulta = $pdo->query("SELECT * FROM emprestimos WHERE status = 'ativo'");
+                            $contador = 1;
                             while ($linha = $consulta->fetch(PDO::FETCH_ASSOC)) {
                                 $hoje = new DateTime();
                                 $dataEntrega = new DateTime($linha['data_devolucao_prevista']);
@@ -84,31 +109,27 @@ try {
                                 $corMulta = "#4caf50";
 
                                 if ($hoje > $dataEntrega) {
-                                    $diferenca = $hoje->diff($dataEntrega);
-                                    $diasAtraso = $diferenca->days;
+                                    $diasAtraso = $hoje->diff($dataEntrega)->days;
                                     $valorMulta = $diasAtraso * 2.50;
                                     $multaTexto = "R$ " . number_format($valorMulta, 2, ',', '.');
                                     $corMulta = "#ff5252";
                                 }
 
                                 echo "<tr>
+                                        <td>{$contador}</td>
                                         <td>{$linha['leitor']}</td>
                                         <td>{$linha['livro_nome']}</td>
                                         <td style='color: {$corMulta}; font-weight: bold;'>{$multaTexto}</td>
                                         <td>
-                                            <a href='finalizar_devolucao.php?id={$linha['id']}' 
-                                               style='background:#0091ff; color:white; padding:5px 10px; border-radius:5px; text-decoration:none; font-size:12px;'>
-                                               Devolver
-                                            </a>
+                                            <a href='finalizar_devolucao.php?id={$linha['id']}' class='btn-devolver'>Devolver</a>
                                         </td>
                                       </tr>";
+                                $contador++;
                             }
-                        } else {
-                            echo "<tr><td colspan='4'>Erro ao carregar banco de dados.</td></tr>";
-                        }
-                        ?>
-                    </tbody>
-                </table>
+                            ?>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </main>
@@ -119,22 +140,28 @@ try {
         const secEmp = document.getElementById('secao-emprestimo');
         const secDev = document.getElementById('secao-devolucoes');
         const subtitle = document.getElementById('card-subtitle');
+        const card = document.getElementById('main-card');
 
-        btnDev.addEventListener('click', () => {
-            btnEmp.classList.remove('active');
-            btnDev.classList.add('active');
-            subtitle.innerText = "Devoluções e Atrasos";
-            secEmp.style.display = "none";
-            secDev.style.display = "block";
-        });
+        function trocarAba(aba) {
+            if (aba === 'dev') {
+                btnEmp.classList.remove('active');
+                btnDev.classList.add('active');
+                subtitle.innerText = "Devoluções e Atrasos";
+                secEmp.style.display = "none";
+                secDev.style.display = "block";
+                card.style.maxWidth = "800px";
+            } else {
+                btnDev.classList.remove('active');
+                btnEmp.classList.add('active');
+                subtitle.innerText = "Novo Empréstimo";
+                secDev.style.display = "none";
+                secEmp.style.display = "block";
+                card.style.maxWidth = "450px";
+            }
+        }
 
-        btnEmp.addEventListener('click', () => {
-            btnDev.classList.remove('active');
-            btnEmp.classList.add('active');
-            subtitle.innerText = "Novo Empréstimo";
-            secDev.style.display = "none";
-            secEmp.style.display = "block";
-        });
+        btnDev.addEventListener('click', () => trocarAba('dev'));
+        btnEmp.addEventListener('click', () => trocarAba('emp'));
     </script>
 </body>
 

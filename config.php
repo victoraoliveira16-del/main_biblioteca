@@ -1,19 +1,11 @@
 <?php
-$host = 'localhost';
-$db   = 'livraria_livh';
-$user = 'root';
-$pass = ''; // Senha padrão do XAMPP é vazia
+// Configurações do Banco de Dados
+define('DB_HOST', '127.0.0.1'); // Usar IP é mais estável no Laragon/Windows
+define('DB_PORT', '3308');      // A porta que você identificou
+define('DB_NAME', 'livraria_livh');
+define('DB_USER', 'root');
+define('DB_PASS', '');          // Senha padrão do Laragon é vazia
+define('DB_CHARSET', 'utf8mb4');
 
-try {
-    // Criando a conexão PDO
-    $pdo = new PDO("mysql:host=$host;dbname=$db;charset=utf8", $user, $pass);
-
-    // Configura o PDO para lançar exceções em caso de erro
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
-    // echo "Conexão realizada com sucesso!"; 
-} catch (PDOException $e) {
-    // Caso a conexão falhe, exibe o erro
-    die("Erro ao conectar: " . $e->getMessage());
-}
-?>
+// Configurações de Erro (mude para false em produção)
+define('DEBUG_MODE', true);
