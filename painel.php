@@ -214,7 +214,41 @@ try {
             </div>
         </div>
     </main>
+<<<<<<< HEAD
     <script src="script.js"></script>
+=======
+
+    <script>
+        // Seleção dos elementos (o seu "controle remoto")
+        const btnEmp = document.getElementById('btn-aba-emp');
+        const btnDev = document.getElementById('btn-aba-dev');
+        const secEmp = document.getElementById('secao-emprestimo');
+        const secDev = document.getElementById('secao-devolucoes');
+        const subtitle = document.getElementById('card-subtitle');
+        const card = document.getElementById('main-card');
+
+        function trocarAba(aba) {
+            if (aba === 'dev') {
+                btnEmp.classList.remove('active');
+                btnDev.classList.add('active');
+                subtitle.innerText = "Devoluções e Atrasos";
+                secEmp.style.display = "none"; // Desliga a luz
+                secDev.style.display = "block"; // Liga a luz
+                card.style.maxWidth = "800px";
+            } else {
+                btnDev.classList.remove('active');
+                btnEmp.classList.add('active');
+                subtitle.innerText = "Novo Empréstimo";
+                secDev.style.display = "none";
+                secEmp.style.display = "block";
+                card.style.maxWidth = "450px";
+            }
+        }
+
+        btnDev.addEventListener('click', () => trocarAba('dev'));
+        btnEmp.addEventListener('click', () => trocarAba('emp'));
+    </script>
+>>>>>>> 64e0afe8339126c442436232ca3893befa6df995
 </body>
 
 </html>
